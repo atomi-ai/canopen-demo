@@ -49,7 +49,6 @@ DEBUG xfguo: can2040_cb 0, msg = CanFrame { id: 234, data: [1, 2, 3, 5, 0, 0, 0,
 
 #### run client (target: x86)
 ```shell
-cd crates/canopen
-cargo run --target x86_64-unknown-linux-gnu --example client
+cargo run --package co_test --target x86_64-unknown-linux-gnu --example client
 ```
 If the program runs correctly, the server window should have received logs corresponding to request/response interactions.

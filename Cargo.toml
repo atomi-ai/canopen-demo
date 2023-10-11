@@ -86,6 +86,7 @@ opt-level = 3
 
 [workspace]
 members = [
+    "co_test",
     "crates/can2040",
     "crates/canopen",
 ]

@@ -1,0 +1,23 @@
+[package]
+name = "co_test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+canopen = {path = "../crates/canopen" }
+
+hashbrown = "0.14"
+ini_core = "0.2"
+bitfield-struct = "0.5"
+bit-struct = "0.3"
+embedded-can = "0.4"
+
+anyhow = "1.0"
+async-std = "1.12"
+byteorder = "1.4"
+lazy_static = "1.4"
+nix = { version = "0.26", features = ["poll"]}
+socketcan = { git = "https://github.com/socketcan-rs/socketcan-rs", branch = "master", features = ["async-std"]}
+tokio = { version = "1", features = ["full"] }
