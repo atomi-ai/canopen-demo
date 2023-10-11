@@ -1,6 +1,6 @@
 mod testing;
 
-use crate::testing::util as tu;
+use co_test::util as tu;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 

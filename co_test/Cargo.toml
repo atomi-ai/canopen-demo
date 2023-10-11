@@ -8,10 +8,6 @@ edition = "2021"
 [dependencies]
 canopen = {path = "../crates/canopen" }
 
-hashbrown = "0.14"
-ini_core = "0.2"
-bitfield-struct = "0.5"
-bit-struct = "0.3"
 embedded-can = "0.4"
 
 anyhow = "1.0"

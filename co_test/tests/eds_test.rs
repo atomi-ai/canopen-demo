@@ -12,7 +12,7 @@ mod eds_tests {
 
     lazy_static! {
         static ref EDS_DATA: Mutex<String> = {
-            use crate::testing::util as tu;
+            use co_test::util as tu;
             Mutex::new(std::fs::read_to_string(tu::EDS_PATH).expect("Failed to read EDS file"))
             // Mutex::new(ObjectDirectory::new(2, &content))
         };

@@ -7,21 +7,24 @@ size to this file.
  */
 #[macro_use]
 extern crate lazy_static;
-mod testing;
 
-use crate::testing::util::{exp, send};
-use async_std::future::timeout;
-use async_std::task;
-use canopen::node;
-use canopen::util::genf;
-use socketcan::Frame;
-use socketcan::{EmbeddedFrame, Socket};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
-use testing::util as tu;
+
+use async_std::future::timeout;
+use async_std::task;
+use socketcan::{EmbeddedFrame, Socket};
+use socketcan::Frame;
+
+use canopen::node;
+use canopen::util::genf;
+use co_test::util::{exp, send};
+use co_test::util as tu;
+
+mod testing;
 
 struct TestContext {
     _node_thread: thread::JoinHandle<()>,
