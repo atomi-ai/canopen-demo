@@ -8,8 +8,9 @@ Given that we need to use CANopen SDO on our RP2040, and we expect to use Rust f
 
 ## How to build it
 ```shell
-git clone git@github.com-atomi:zephyr-atomi/canopen_rust.git canopen
-cargo build --target thumbv6m-none-eabi
+git clone git@github.com:atomi-ai/canopen-demo.git
+cd canopen-demo
+cargo build
 ```
 
 ## How to run it on a CAN bus
@@ -25,12 +26,6 @@ SN65HVD230 board: [[Waveshare SN65HVD230](https://www.amazon.com/SN65HVD230-CAN-
 For wiring connections, please refer to board manuals / datasheets. We plan to integrate the SN65HVD230 and RP2040 onto a single board in the future for a more comprehensive setup.
 
 ### Run the demo
-
-#### Clone dependent repos
-```shell
-./scripts/clone_repos.sh
-```
-Please modify the shell script if you've your own repo url. (git submodule need to tediously handle dependent repositories, I decided not to use it in this project)
 
 #### Start the server (target: RP2040)
 ```shell
@@ -52,3 +47,17 @@ DEBUG xfguo: can2040_cb 0, msg = CanFrame { id: 234, data: [1, 2, 3, 5, 0, 0, 0,
 cargo run --package co_test --target x86_64-unknown-linux-gnu --example client
 ```
 If the program runs correctly, the server window should have received logs corresponding to request/response interactions.
+
+NOTE: Please remember to enable can ip link before running the demo client, like below:
+```shell
+$ ip link
+...
+22: can0: <NOARP,UP,LOWER_UP,ECHO> mtu 16 qdisc pfifo_fast state UP mode DEFAULT group default qlen 10
+    link/can 
+```
+
+## TODO
+### For the repo
+* Enable PDO / EMER and other canopen features
+* Add a wiring diagram.
+### Enable canopen on ESP32.
