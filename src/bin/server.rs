@@ -96,37 +96,15 @@ fn main() -> ! {
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     let eds_content = read_string_from_flash(EDS_DATA_ADDRESS).unwrap();
-    let mut node = node::Node::new(0x2, eds_content.as_str(), Box::new(can_bus));
+    let mut node = node::Node::new(0x2, eds_content.as_str(), can_bus);
     node.init();
 
     loop {
         let free_bytes = global_allocator::ALLOCATOR.free();
         info!("Free bytes in heap: {}", free_bytes);
         node.process_one_frame();
+        delay.delay_ms(500);
     }
-
-    // let mut t: u8 = 0xfe;
-    // loop {
-    //     info!("on!");
-    //     let free_bytes = global_allocator::ALLOCATOR.free();
-    //     info!("Free bytes in heap: {}", free_bytes);
-    //
-    //     led_pin.set_high().unwrap();
-    //
-    //     // main logic here.
-    //     let id = Id::Standard(StandardId::new(0x607).unwrap());
-    //     t = if t == 0xff { 0x0 } else { t + 1 };
-    //     let frame = CanFrame::new(id, &[0x55, 0x66, 0x77, t]).unwrap();
-    //     debug!("try to transmit frame {:?}", frame);
-    //     can_bus.transmit(&frame);
-    //     can_bus.receive();
-    //
-    //
-    //     delay.delay_ms(500);
-    //     info!("off!");
-    //     led_pin.set_low().unwrap();
-    //     delay.delay_ms(500);
-    // }
 }
 
 // End of file

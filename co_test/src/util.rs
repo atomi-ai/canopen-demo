@@ -1,8 +1,10 @@
-use embedded_can::Frame;
+use embedded_can::{Frame, StandardId};
 use nix::poll::{poll, PollFd, PollFlags};
 use socketcan::{CanFrame, CanSocket, Socket};
 use std::os::fd::AsRawFd;
 use std::time::{Duration, Instant};
+use log::info;
+use canopen::util::u64_to_vec;
 
 pub const INTERFACE_NAME: &str = "vcan0";
 pub const EDS_PATH: &str = "tests/fixtures/sample.eds";
@@ -40,19 +42,26 @@ fn read_frame_with_timeout(
 }
 
 pub fn send(socket: &CanSocket, req: &socketcan::CanFrame) {
+    info!("xfguo: send packet: {:?}", req);
     socket
         .write_frame(req)
         .expect("Failed to send request frame");
 }
 
+pub fn sendf(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
+    let bytes = u64_to_vec(data, len);
+    let frame = CanFrame::new(StandardId::new(cob_id).unwrap(), bytes.as_slice()).unwrap();
+    socket.write_frame(&frame).expect(&format!("Failed on sendf: {:?}", frame));
+}
+
 pub fn exp(socket: &CanSocket, exp_resp: &socketcan::CanFrame) {
-    // 设置等待响应的超时
     let timeout = Duration::from_millis(100);
     let start_time = Instant::now();
 
     loop {
         if let Ok(response_frame) = read_frame_with_timeout(socket, timeout) {
-            if response_frame.id() == exp_resp.id() && response_frame.data() == exp_resp.data() {
+            if response_frame.id() == exp_resp.id()
+                && response_frame.data() == exp_resp.data() {
                 return;
             }
         }

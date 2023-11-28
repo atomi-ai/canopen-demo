@@ -17,3 +17,9 @@ lazy_static = "1.4"
 nix = { version = "0.26", features = ["poll"]}
 socketcan = { git = "https://github.com/socketcan-rs/socketcan-rs", branch = "master", features = ["async-std"]}
 tokio = { version = "1", features = ["full"] }
+timer = "0.2"
+chrono = "0.4"
+log = "0.4.20"
+env_logger = { version = "0.10.1", features = [] }
+
+[dev-dependencies]

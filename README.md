@@ -55,6 +55,11 @@ $ ip link
 22: can0: <NOARP,UP,LOWER_UP,ECHO> mtu 16 qdisc pfifo_fast state UP mode DEFAULT group default qlen 10
     link/can 
 ```
+You can use commands below to enable "can0":
+```shell
+sudo ip link set can0 type can bitrate 10000
+sudo ip link set up can0
+```
 
 ## TODO
 ### For the repo

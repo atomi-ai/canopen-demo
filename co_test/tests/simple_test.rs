@@ -49,10 +49,12 @@ async fn test_start_a_conode() {
         let content = std::fs::read_to_string(tu::EDS_PATH).expect("Failed to read EDS file");
         let socket =
             socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
-        let mut node = node::Node::new(2, &content, Box::new(socket));
+        let mut node = node::Node::new(2, &content, socket);
         node.init();
         is_running_clone.store(true, Ordering::Relaxed);
-        node.run();
+        loop {
+            node.process_one_frame();
+        }
     });
     while !is_running.load(Ordering::Relaxed) {
         thread::sleep(Duration::from_millis(100));

@@ -1804,7 +1804,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0005
 AccessType=ro
-DefaultValue=0x00
+DefaultValue=0xFF
 PDOMapping=1
 
 [6000sub2]
@@ -1978,7 +1978,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0003
 AccessType=ro
-DefaultValue=0
+DefaultValue=0x03FF
 PDOMapping=1
 
 [6401sub2]
@@ -1987,7 +1987,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0003
 AccessType=ro
-DefaultValue=0
+DefaultValue=0x03FF
 PDOMapping=1
 
 [6401sub3]
@@ -1996,7 +1996,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0003
 AccessType=ro
-DefaultValue=0
+DefaultValue=0x03FF
 PDOMapping=1
 
 [6401sub4]
@@ -2005,7 +2005,7 @@ ObjectType=0x7
 ;StorageLocation=RAM
 DataType=0x0003
 AccessType=ro
-DefaultValue=0
+DefaultValue=0x03FF
 PDOMapping=1
 
 [6401sub5]

@@ -27,7 +27,8 @@ rp-pico = "0.8"
 
 # If you're not going to use a Board Support Package you'll need these:
 rp2040-hal = { version = "0.9", features = ["rt", "critical-section-impl"] }
-# rp2040-boot2 = "0.3"
+rp2040-boot2 = "0.3"
+critical-section = "1.0"
 
 # experiment libraries
 #rp2040-flash = "0.3"
