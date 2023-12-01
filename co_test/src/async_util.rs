@@ -154,6 +154,15 @@ impl AsyncExpector {
             Err(err) => { assert!(false, "Error in getting response: {:?}", err)}
         }
     }
+
+    pub fn unexpect(&mut self, cob_id: u16, data: u64, byte_num: usize) {
+        let unexpected = genf(cob_id, &u64_to_vec(data, byte_num));
+        let c_clone = self.container.clone();
+        let mut c = c_clone.lock().unwrap();
+        if let Some(frame) = c.find_and_remove(&unexpected) {
+            assert!(false, "Error to get unexpected frame: {:?}", unexpected);
+        }
+    }
 }
 
 impl Drop for AsyncExpector {

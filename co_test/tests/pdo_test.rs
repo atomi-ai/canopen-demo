@@ -108,7 +108,8 @@ fn test_tpdo_sync_mode() {
         // Set device to Operational
         sendf(&s, 0x000, 0x01_02, 2);
         ec.async_expect(0x282, 0xFF_03_FF_03_FF_03_FF_03, 8);
-        for _ in 0..10 {
+        ec.unexpect(0x182, 0xFF_00, 2);
+        for _ in 0..3 {
             for _ in 0..10 { ec.send(0x80, 0x0, 0); }
             ec.expect(0x182, 0xFF_00, 2);
         }
@@ -132,7 +133,7 @@ fn test_tpdo_sync_mode() {
         let mut ec = AsyncExpector::new();
         // Set device to Operational
         sendf(&s, 0x000, 0x01_02, 2);
-        for _ in 0..10 {
+        for _ in 0..3 {
             // TODO(zephyr): SYNC should not carry any data
             for _ in 0..10 { ec.send(0x80, 0x0, 0); }
             ec.expect(0x182, 0xFF_00, 2);

@@ -99,7 +99,7 @@ lazy_static! {
         // Init panic.
         let _ = panic::take_hook();
         panic::set_hook(Box::new(|panic_info| {
-            error!("{}", panic_info);
+            error!("{}. Callstack:\n{:?}", panic_info, backtrace::Backtrace::new());
             std::process::exit(1);
         }));
 
@@ -117,5 +117,5 @@ pub fn default_logger_init() {
             thread::current().name().unwrap_or("main"),
             record.args(),
         ))
-    }).filter(None, LevelFilter::Info).init();
+    }).filter(None, LevelFilter::Debug).init();
 }
