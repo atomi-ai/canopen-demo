@@ -11,7 +11,7 @@ use co_test::util::INTERFACE_NAME;
 
 fn main() {
     let mut ec = AsyncExpector::new();
-    ec.async_expect(genf_and_padding(0x582, &u64_to_vec(0x60_00_18_01_00_00_00_00, 8)));
+    ec.async_expect(0x582, 0x60_00_18_01_00_00_00_00, 8);
     assert_eq!(ec.wait_for_all(), "");
 
     let mut socket = Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)

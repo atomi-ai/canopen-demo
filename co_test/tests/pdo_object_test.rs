@@ -7,25 +7,28 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use log::info;
 
-use canopen::object_directory::ObjectDirectory;
-use canopen::pdo::PdoObjects;
 use co_test::util as tu;
+use canopen::node::Node;
+use embedded_can::{nb::Can};
+use socketcan::CanSocket;
+use socketcan::{EmbeddedFrame, Frame, Socket};
 
 lazy_static! {
-    static ref PDO_OBJECTS: Arc<Mutex<PdoObjects>> = {
+    static ref TESTING_NODE: Arc<Mutex<Node<CanSocket>>> = {
         testing::default_logger_init();
         info!("xfguo: static init");
         let content = std::fs::read_to_string(tu::DEMO_EDS_PATH).expect("Failed to read EDS file");
-        let mut object_directory = ObjectDirectory::new(2, &content);
-        let pdo_objects = PdoObjects::new(&mut object_directory);
-        Arc::new(Mutex::new(pdo_objects))
+        let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+        let node = Node::new(0x2, &content, s);
+        Arc::new(Mutex::new(node))
     };
 }
 
 #[test]
 fn test_rpdo_comm_params() {
-    let pdo_objs = PDO_OBJECTS.lock().unwrap();
-    let rpdo = &pdo_objs.rpdos[0];
+    let node = TESTING_NODE.lock().unwrap();
+    info!("xfguo: pdo_objs = {:#x?}", node.pdo_objects);
+    let rpdo = &node.pdo_objects.rpdos[0];
     assert_eq!(rpdo.largest_sub_index, 5);
     assert_eq!(rpdo.cob_id, 0x202);
     assert_eq!(rpdo.transmission_type, 255);

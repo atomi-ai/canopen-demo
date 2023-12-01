@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use alloc::sync::Arc;
 use std::io::Write;
+use std::panic;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
@@ -13,7 +14,7 @@ use async_std::task;
 use chrono::Local;
 use env_logger::Builder;
 use lazy_static::lazy_static;
-use log::info;
+use log::{error, info};
 use log::LevelFilter;
 use socketcan::{EmbeddedFrame, Frame, Socket};
 use timer::Timer;
@@ -41,13 +42,9 @@ impl TestContext {
         let node_thread = thread::Builder::new().name("node_thread".to_string()).spawn(move || {
             let sock = socketcan::CanSocket::open(tu::INTERFACE_NAME)
                 .expect("Failed to open CAN socket");
+            // Please remember to set "non-blocking" tag for the socket.
             sock.set_nonblocking(true).expect("TODO: panic message");
-
-            let node_arc = Arc::new(Mutex::new(Node::new(
-                2,
-                &content,
-                sock,
-            )));
+            let node_arc = Arc::new(Mutex::new(Node::new(2, &content, sock)));
             {
                 let mut node_lock = node_arc.lock().unwrap();
                 node_lock.init();
@@ -98,6 +95,14 @@ impl TestContext {
 lazy_static! {
     pub static ref CONTEXT: Arc<Mutex<TestContext>> = {
         default_logger_init();
+
+        // Init panic.
+        let _ = panic::take_hook();
+        panic::set_hook(Box::new(|panic_info| {
+            error!("{}", panic_info);
+            std::process::exit(1);
+        }));
+
         let ctx = task::block_on(TestContext::new()).unwrap();
         Arc::new(Mutex::new(ctx))
     };
