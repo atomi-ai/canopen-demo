@@ -25,7 +25,7 @@ fn test_periodical_sync_timer() {
     let timer = Timer::new();
 
     {
-        let mut guard = start_sync(&timer);
+        let mut _guard = start_sync(&timer);
         info!("xfguo: start wait at {}", get_current_timestamp_ms());
         thread::sleep(Duration::from_millis(1000));
         info!("xfguo: done wait at {}", get_current_timestamp_ms());

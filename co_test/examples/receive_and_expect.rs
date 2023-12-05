@@ -1,11 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use embedded_can::Frame;
 use embedded_can::nb::Can;
 use socketcan::Socket;
 
-use canopen::util::{genf_and_padding, u64_to_vec};
 use co_test::async_util::AsyncExpector;
 use co_test::util::INTERFACE_NAME;
 
@@ -14,7 +12,7 @@ fn main() {
     ec.async_expect(0x582, 0x60_00_18_01_00_00_00_00, 8);
     assert_eq!(ec.wait_for_all(), "");
 
-    let mut socket = Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)
+    let socket = Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)
         .expect("Failed to open CAN socket")));
 
     {

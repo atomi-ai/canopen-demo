@@ -46,10 +46,10 @@ async fn test_start_a_conode() {
     let is_running = Arc::new(AtomicBool::new(false));
     let is_running_clone = is_running.clone();
     thread::spawn(move || {
-        let content = std::fs::read_to_string(tu::EDS_PATH).expect("Failed to read EDS file");
+        let content = std::fs::read_to_string(tu::SAMPLE_EDS_PATH).expect("Failed to read EDS file");
         let socket =
             socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
-        let mut node = node::Node::new(2, &content, socket);
+        let mut node = node::Node::new(2, &content, socket).expect("");
         node.init();
         is_running_clone.store(true, Ordering::Relaxed);
         loop {

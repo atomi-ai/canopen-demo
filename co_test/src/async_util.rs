@@ -159,7 +159,7 @@ impl AsyncExpector {
         let unexpected = genf(cob_id, &u64_to_vec(data, byte_num));
         let c_clone = self.container.clone();
         let mut c = c_clone.lock().unwrap();
-        if let Some(frame) = c.find_and_remove(&unexpected) {
+        if let Some(_) = c.find_and_remove(&unexpected) {
             assert!(false, "Error to get unexpected frame: {:?}", unexpected);
         }
     }

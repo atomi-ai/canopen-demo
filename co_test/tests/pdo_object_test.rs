@@ -1,32 +1,28 @@
-mod testing;
 extern crate alloc;
 
-use alloc::sync::Arc;
-use std::io::Write;
-use std::sync::Mutex;
-use lazy_static::lazy_static;
-use log::info;
-
-use co_test::util as tu;
-use canopen::node::Node;
-use embedded_can::{nb::Can};
 use socketcan::CanSocket;
-use socketcan::{EmbeddedFrame, Frame, Socket};
+use socketcan::Socket;
+
+use canopen::node::Node;
+use co_test::util as tu;
 use co_test::util::{expf, INTERFACE_NAME, sendf};
+
 use crate::testing::CONTEXT;
+
+mod testing;
 
 #[test]
 fn test_rpdo_comm_params() {
     let _context = CONTEXT.lock().unwrap();
     let content = std::fs::read_to_string(tu::DEMO_EDS_PATH).expect("Failed to read EDS file");
     let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
-    let node = Node::new(0x2, &content, s);
+    let node = Node::new(0x2, &content, s).expect("Errors in creating a node");
     // info!("xfguo: pdo_objs = {:#x?}", node.pdo_objects);
-    let rpdo = &node.pdo_objects.rpdos[0];
-    assert_eq!(rpdo.largest_sub_index, 5);
-    assert_eq!(rpdo.cob_id, 0x202);
-    assert_eq!(rpdo.transmission_type, 255);
-    assert_eq!(rpdo.event_timer, 0);
+    let rpdo = node.pdo_objects().get_rpdo(0);
+    assert_eq!(rpdo.largest_sub_index(), 5);
+    assert_eq!(rpdo.cob_id(), 0x202);
+    assert_eq!(rpdo.transmission_type(), 255);
+    assert_eq!(rpdo.event_timer(), 0);
 }
 
 fn pdo_test_mapping_params(s: &CanSocket, index: u16) {

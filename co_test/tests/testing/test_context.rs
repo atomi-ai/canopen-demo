@@ -26,9 +26,6 @@ pub struct TestContext {
     _node_thread: thread::JoinHandle<()>,
 }
 
-const EVENT_TIMER_INTERVAL_MS: i64 = 100;
-
-
 impl TestContext {
     async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         info!("Wait for the server up...");
@@ -44,7 +41,8 @@ impl TestContext {
                 .expect("Failed to open CAN socket");
             // Please remember to set "non-blocking" tag for the socket.
             sock.set_nonblocking(true).expect("TODO: panic message");
-            let node_arc = Arc::new(Mutex::new(Node::new(2, &content, sock)));
+            let node_arc = Arc::new(Mutex::new(Node::new(2, &content, sock)
+                .expect("Errors in creating a node")));
             {
                 let mut node_lock = node_arc.lock().unwrap();
                 node_lock.init();

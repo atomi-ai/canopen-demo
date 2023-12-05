@@ -134,7 +134,6 @@ fn test_tpdo_sync_mode() {
         // Set device to Operational
         sendf(&s, 0x000, 0x01_02, 2);
         for _ in 0..3 {
-            // TODO(zephyr): SYNC should not carry any data
             for _ in 0..10 { ec.send(0x80, 0x0, 0); }
             ec.expect(0x182, 0xFF_00, 2);
             ec.expect(0x282, 0xFF_03_FF_03_FF_03_FF_03, 8);

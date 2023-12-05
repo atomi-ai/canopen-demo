@@ -22,6 +22,8 @@ use rp_pico::hal::uart::UartPeripheral;
 use fugit::RateExtU32;
 use embedded_hal::serial::Read;
 
+// TODO(zephyr): Write a doc to prepare eds for the application.
+// TODO(zephyr): Do we need a serialization solution if the EDS file is too large?
 #[entry]
 fn main() -> ! {
     info!("Store_to_littlefs starts");

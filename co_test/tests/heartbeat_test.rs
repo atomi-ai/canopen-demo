@@ -1,6 +1,5 @@
 use socketcan::Socket;
-use canopen::util::{genf_and_padding, u64_to_vec};
-use co_test::util::{exp, expf, INTERFACE_NAME, send, sendf};
+use co_test::util::{expf, INTERFACE_NAME, sendf};
 use crate::testing::CONTEXT;
 
 mod testing;
