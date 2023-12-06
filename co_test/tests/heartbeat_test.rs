@@ -1,5 +1,5 @@
 use socketcan::Socket;
-use co_test::util::{expf, INTERFACE_NAME, sendf};
+use co_test::util::{exp, INTERFACE_NAME, send};
 use crate::testing::CONTEXT;
 
 mod testing;
@@ -9,9 +9,9 @@ fn test_heartbeat_basic() {
     let _context = CONTEXT.lock().unwrap();
     let s = socketcan::CanSocket::open(INTERFACE_NAME).expect("Failed to open CAN socket");
 
-    sendf(&s, 0x602, 0x2B_17_10_00_64_00_00_00, 8);
-    expf(&s, 0x582, 0x60_17_10_00_00_00_00_00, 8);
+    send(&s, 0x602, 0x2B_17_10_00_64_00_00_00, 8);
+    exp(&s, 0x582, 0x60_17_10_00_00_00_00_00, 8);
     for _ in 0..3 {
-        expf(&s, 0x702, 0x0, 1);
+        exp(&s, 0x702, 0x0, 1);
     }
 }

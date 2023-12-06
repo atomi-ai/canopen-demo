@@ -41,25 +41,18 @@ fn read_frame_with_timeout(
     }
 }
 
-pub fn send(socket: &CanSocket, req: &socketcan::CanFrame) {
-    debug!("xfguo: send packet: {:?}", req);
-    socket
-        .write_frame(req)
-        .expect("Failed to send request frame");
-}
-
-pub fn sendf(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
+pub fn send(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
     let bytes = u64_to_vec(data, len);
     let frame = CanFrame::new(StandardId::new(cob_id).unwrap(), bytes.as_slice()).unwrap();
     socket.write_frame(&frame).expect(&format!("Failed on sendf: {:?}", frame));
 }
 
-pub fn expf(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
+pub fn exp(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
     let frame = CanFrame::new(StandardId::new(cob_id).unwrap(), u64_to_vec(data, len).as_slice()).unwrap();
-    exp(socket, &frame);
+    expect_frame(socket, &frame);
 }
 
-pub fn exp(socket: &CanSocket, expected: &socketcan::CanFrame) {
+fn expect_frame(socket: &CanSocket, expected: &socketcan::CanFrame) {
     let timeout = Duration::from_millis(100);
     let start_time = Instant::now();
 
