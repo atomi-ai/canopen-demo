@@ -5,7 +5,7 @@ use alloc::sync::Arc;
 use std::io::Write;
 use std::panic;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
@@ -16,7 +16,7 @@ use env_logger::Builder;
 use lazy_static::lazy_static;
 use log::{error, info};
 use log::LevelFilter;
-use socketcan::{EmbeddedFrame, Frame, Socket};
+use socketcan::{CanSocket, EmbeddedFrame, Frame, Socket};
 use timer::Timer;
 
 use canopen::node::Node;
@@ -44,8 +44,13 @@ impl TestContext {
             let node_arc = Arc::new(Mutex::new(Node::new(2, &content, sock)
                 .expect("Errors in creating a node")));
             {
-                let mut node_lock = node_arc.lock().unwrap();
-                node_lock.init();
+                let mut node_lock : MutexGuard<Node<CanSocket>> = node_arc.lock().unwrap();
+                match node_lock.init() {
+                    Ok(_) => {}
+                    Err(err) => {
+                        error!("Node init error: {:?}", err);
+                    }
+                }
             }
             let timer = Timer::new();
             let node_clone = Arc::clone(&node_arc);

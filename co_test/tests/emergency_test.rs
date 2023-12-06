@@ -1,6 +1,5 @@
 use socketcan::Socket;
-use canopen::util::{genf_and_padding, u64_to_vec};
-use co_test::util::{exp, expf, INTERFACE_NAME, send, sendf};
+use co_test::util::{expf, INTERFACE_NAME, sendf};
 use crate::testing::CONTEXT;
 
 mod testing;
@@ -11,25 +10,25 @@ fn test_emergency_basic() {
     let s = socketcan::CanSocket::open(INTERFACE_NAME).expect("Failed to open CAN socket");
 
     // Disable TPDOs
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x23_00_18_01_82_01_00_C0, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_00_18_01_00_00_00_00, 8)));
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x23_01_18_01_82_02_00_C0, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_01_18_01_00_00_00_00, 8)));
+    sendf(&s, 0x602, 0x23_00_18_01_82_01_00_C0, 8);
+    expf(&s, 0x582, 0x60_00_18_01_00_00_00_00, 8);
+    sendf(&s, 0x602, 0x23_01_18_01_82_02_00_C0, 8);
+    expf(&s, 0x582, 0x60_01_18_01_00_00_00_00, 8);
 
     // Set state to pre-operational and set 0x1800 related.
     sendf(&s, 0x000, 0x80_02, 2);
     // Write value C0000202h to object 1400h:01h
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x23_00_14_01_02_02_00_C0, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_00_14_01_00_00_00_00, 8)));
+    sendf(&s, 0x602, 0x23_00_14_01_02_02_00_C0, 8);
+    expf(&s, 0x582, 0x60_00_14_01_00_00_00_00, 8);
     // Write value 0Ah to object 1400h:02h
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x2F_00_14_02_0A_00_00_00, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_00_14_02_00_00_00_00, 8)));
+    sendf(&s, 0x602, 0x2F_00_14_02_0A_00_00_00, 8);
+    expf(&s, 0x582, 0x60_00_14_02_00_00_00_00, 8);
     // Write value 0h to object 1400h:05h
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x2B_00_14_05_00_00_00_00, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_00_14_05_00_00_00_00, 8)));
+    sendf(&s, 0x602, 0x2B_00_14_05_00_00_00_00, 8);
+    expf(&s, 0x582, 0x60_00_14_05_00_00_00_00, 8);
     // Write value 40000202h to object 1400h:01h, enable the RPDO object
-    send(&s, &genf_and_padding(0x602, &u64_to_vec(0x23_00_14_01_02_02_00_40, 8)));
-    exp(&s, &genf_and_padding(0x582, &u64_to_vec(0x60_00_14_01_00_00_00_00, 8)));
+    sendf(&s, 0x602, 0x23_00_14_01_02_02_00_40, 8);
+    expf(&s, 0x582, 0x60_00_14_01_00_00_00_00, 8);
 
     sendf(&s, 0x602, 0x40_00_16_00_00_00_00_00, 8);
     expf(&s, 0x582, 0x4F_00_16_00_02_00_00_00, 8);

@@ -10,7 +10,8 @@ use embedded_can::Frame;
 use embedded_can::nb::Can;
 use log::{debug, info};
 use socketcan::{CanFrame, CanSocket, Socket};
-use canopen::util::{genf, u64_to_vec};
+use canopen::error::ErrorCode;
+use canopen::util::{create_frame, u64_to_vec};
 
 use crate::util::INTERFACE_NAME;
 
@@ -109,13 +110,14 @@ impl AsyncExpector {
         }
     }
 
-    pub fn async_expect(&mut self, cob_id: u16, data: u64, byte_num: usize) {
-        let expected = genf(cob_id, &u64_to_vec(data, byte_num));
+    pub fn async_expect(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode> {
+        let expected = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         let container_clone = self.container.clone();
         self.join_handlers.push(thread::spawn(move || {
             debug!("xfguo: wait for frame: {:?}", expected);
             wait_for_frame(container_clone, expected)
         }));
+        Ok(())
     }
 
     pub fn wait_for_all(&mut self) -> String {
@@ -137,31 +139,34 @@ impl AsyncExpector {
         res
     }
 
-    pub fn send(&mut self, cob_id: u16, data: u64, byte_num: usize) {
-        let f : CanFrame = genf(cob_id, &u64_to_vec(data, byte_num));
+    pub fn send(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode> {
+        let f : CanFrame = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         {
             let socket = self.send_socket.lock().unwrap();
             debug!("xfguo: send packet: {:?}", f);
             socket.write_frame(&f).expect("Failed to send request frame");
         }
+        Ok(())
     }
 
-    pub fn expect(&mut self, cob_id: u16, data: u64, byte_num: usize) {
-        let expected = genf(cob_id, &u64_to_vec(data, byte_num));
+    pub fn expect(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode> {
+        let expected = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         let container_clone = self.container.clone();
         match wait_for_frame(container_clone, expected) {
             Ok(_) => {}
             Err(err) => { assert!(false, "Error in getting response: {:?}", err)}
         }
+        Ok(())
     }
 
-    pub fn unexpect(&mut self, cob_id: u16, data: u64, byte_num: usize) {
-        let unexpected = genf(cob_id, &u64_to_vec(data, byte_num));
+    pub fn unexpect(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode>{
+        let unexpected = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         let c_clone = self.container.clone();
         let mut c = c_clone.lock().unwrap();
         if let Some(_) = c.find_and_remove(&unexpected) {
             assert!(false, "Error to get unexpected frame: {:?}", unexpected);
         }
+        Ok(())
     }
 }
 

@@ -5,13 +5,14 @@ Since the block size on the server side can be modified by incoming
 requests, I've moved all test cases that require the default block
 size to this file.
  */
-mod testing;
+use socketcan::Socket;
+
+use co_test::util::{expf, sendf};
+use co_test::util as tu;
 
 use crate::testing::CONTEXT;
-use socketcan::Socket;
-use canopen::util::genf_and_padding;
-use co_test::util::{exp, send};
-use co_test::util as tu;
+
+mod testing;
 
 #[test]
 // SDO 21, write
@@ -19,14 +20,12 @@ fn test_block_download_without_crc() {
     let _context = CONTEXT.lock().unwrap();
     let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
 
-    send(&s, &genf_and_padding(0x602, &[0xC2, 0x17, 0x10, 0x00, 0x02, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA4, 0x17, 0x10, 0x00, 0x7F, 0, 0, 0]));
-
-    send(&s, &genf_and_padding(0x602, &[0x81, 0, 0, 0, 0, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA2, 0x01, 0x7F, 0, 0, 0, 0, 0]));
-
-    send(&s, &genf_and_padding(0x602, &[0xD5, 0, 0, 0, 0, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA1, 0, 0, 0, 0, 0, 0, 0]));
+    sendf(&s, 0x602, 0xC2_17_10_00_02_00_00_00, 8);
+    expf(&s, 0x582, 0xA4_17_10_00_7F_00_00_00, 8);
+    sendf(&s, 0x602, 0x81_00_00_00_00_00_00_00, 8);
+    expf(&s, 0x582, 0xA2_01_7F_00_00_00_00_00, 8);
+    sendf(&s, 0x602, 0xD5_00_00_00_00_00_00_00, 8);
+    expf(&s, 0x582, 0xA1_00_00_00_00_00_00_00, 8);
 }
 
 #[test]
@@ -36,12 +35,10 @@ fn test_block_download_with_crc() {
     let _context = CONTEXT.lock().unwrap();
     let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
 
-    send(&s, &genf_and_padding(0x602, &[0xC6, 0x17, 0x10, 0x00, 0x02, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA4, 0x17, 0x10, 0x00, 0x7F, 0, 0, 0]));
-
-    send(&s, &genf_and_padding(0x602, &[0x81, 0, 0, 0, 0, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA2, 0x01, 0x7F, 0, 0, 0, 0, 0]));
-
-    send(&s, &genf_and_padding(0x602, &[0xD5, 0, 0, 0, 0, 0, 0, 0]));
-    exp(&s, &genf_and_padding(0x582, &[0xA1, 0, 0, 0, 0, 0, 0, 0]));
+    sendf(&s, 0x602, 0xC6_17_10_00_02_00_00_00, 8);
+    expf(&s, 0x582, 0xA4_17_10_00_7F_00_00_00, 8);
+    sendf(&s, 0x602, 0x81_00_00_00_00_00_00_00, 8);
+    expf(&s, 0x582, 0xA2_01_7F_00_00_00_00_00, 8);
+    sendf(&s, 0x602, 0xD5_00_00_00_00_00_00_00, 8);
+    expf(&s, 0x582, 0xA1_00_00_00_00_00_00_00, 8);
 }

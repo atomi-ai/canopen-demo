@@ -3,13 +3,14 @@ use std::thread;
 
 use embedded_can::nb::Can;
 use socketcan::Socket;
+use canopen::error::ErrorCode;
 
 use co_test::async_util::AsyncExpector;
 use co_test::util::INTERFACE_NAME;
 
-fn main() {
+fn main() -> Result<(), ErrorCode> {
     let mut ec = AsyncExpector::new();
-    ec.async_expect(0x582, 0x60_00_18_01_00_00_00_00, 8);
+    ec.async_expect(0x582, 0x60_00_18_01_00_00_00_00, 8)?;
     assert_eq!(ec.wait_for_all(), "");
 
     let socket = Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)
@@ -32,4 +33,5 @@ fn main() {
         let t = socket.receive();
         println!("t = {:?}", t);
     }
+    Ok(())
 }

@@ -50,7 +50,7 @@ async fn test_start_a_conode() {
         let socket =
             socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
         let mut node = node::Node::new(2, &content, socket).expect("");
-        node.init();
+        let _ = node.init();
         is_running_clone.store(true, Ordering::Relaxed);
         loop {
             node.process_one_frame();
