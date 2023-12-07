@@ -3,14 +3,11 @@
 
 extern crate alloc;
 
-use alloc::string::{String, ToString};
 use defmt::info;
 use rp_pico::entry;
 use panic_probe as _;
 use defmt_rtt as _;
 use app::{global_allocator, utils};
-
-const FLASH_BASE_ADDR: u32 = 0x10000000;
 
 #[entry]
 unsafe fn main() -> ! {

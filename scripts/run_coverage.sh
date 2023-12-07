@@ -7,7 +7,7 @@ export LLVM_PROFILE_FILE="${PWD}/target/debug/your_project-%p-%m.profraw"
 
 # 清理旧的覆盖率数据
 echo "Cleaning old coverage data..."
-cargo clean
+cargo +nightly clean
 
 # 运行测试
 echo "Running tests..."

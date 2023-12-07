@@ -5,30 +5,28 @@
 #![no_std]
 #![no_main]
 
-use alloc::boxed::Box;
-use core::cell::RefCell;
-use can2040;
+extern crate alloc;
+extern crate alloc_cortex_m;
 
-use bsp::entry;
-use defmt::*;
+// reserved
 use defmt_rtt as _;
-use embedded_hal::digital::v2::OutputPin;
 use panic_probe as _;
 
-// Provide an alias for our BSP so we can switch targets quickly.
-// Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
-use rp_pico as bsp;
-// use sparkfun_pro_micro_rp2040 as bsp;
-
+use bsp::entry;
 use bsp::hal::{
-    clocks::{init_clocks_and_plls, Clock},
+    clocks::{Clock, init_clocks_and_plls},
     pac,
     sio::Sio,
     watchdog::Watchdog,
 };
+use defmt::*;
+use embedded_can::Frame;
+use rp_pico as bsp;
+
+use app::global_allocator;
+use app::utils::{EDS_DATA_ADDRESS, read_string_from_flash};
+use can2040;
 use canopen::node;
-use can2040::CanFrame;
-use embedded_can::{Frame, Id};
 
 //
 // #[defmt::timestamp]
@@ -42,22 +40,8 @@ fn panic() -> ! {
     loop {}
 }
 
-extern crate alloc_cortex_m;
-extern crate alloc;
-
-use embedded_can::StandardId;
-use fugit::{Duration, MicrosDurationU32};
-use rp2040_hal::pac::interrupt;
-use rp2040_hal::Timer;
-use rp2040_hal::timer::{Alarm, ScheduleAlarmError};
-use app::{global_allocator, utils};
-use app::utils::{EDS_DATA_ADDRESS, read_string_from_flash};
-
 #[entry]
 fn main() -> ! {
-    // defmt::rtt::Logger::init();
-    // rtt_target::rtt_init_print!();
-
     info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
     let mut core = pac::CorePeripherals::take().unwrap();
@@ -89,15 +73,13 @@ fn main() -> ! {
     // init the correct led_pin for Pico Pi.
     let mut led_pin = pins.led.into_push_pull_output();
 
-    use embedded_can::blocking::Can;
-
     let mut can_bus = can2040::initialize_cbus(&mut core);
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     let eds_content = read_string_from_flash(EDS_DATA_ADDRESS).unwrap();
-    let mut node = node::Node::new(0x2, eds_content.as_str(), can_bus);
-    node.init();
+    let mut node = node::Node::new(0x2, eds_content.as_str(), can_bus).expect("TODO: panic message");
+    node.init().expect("TODO: panic message");
 
     loop {
         let free_bytes = global_allocator::ALLOCATOR.free();
