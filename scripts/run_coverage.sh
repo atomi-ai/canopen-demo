@@ -12,6 +12,7 @@ cargo +nightly clean
 # 运行测试
 echo "Running tests..."
 cargo +nightly test --target x86_64-unknown-linux-gnu --package co_test
+cargo +nightly test --target x86_64-unknown-linux-gnu --package canopen
 
 # 生成覆盖率报告
 echo "Generating coverage report..."
