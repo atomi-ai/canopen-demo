@@ -1,12 +1,16 @@
-use crate::prelude::*;
-
+use core::cmp::min;
 use core::str::FromStr;
+
 use embedded_can::{Frame, Id, StandardId};
+
+use crate::error::{AbortCode, ErrorCode};
+use crate::error::AbortCode::GeneralError;
+use crate::prelude::*;
 
 pub trait ParseRadix: FromStr {
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err>
-    where
-        Self: Sized;
+        where
+            Self: Sized;
 }
 
 macro_rules! impl_parse_radix_signed {
@@ -59,43 +63,23 @@ pub fn result_to_option<T, Err>(res: Result<T, Err>) -> Option<T> {
     }
 }
 
-pub fn to_value_with_node_id(node_id: u16, expression: &str) -> String {
-    // Replace $NODEID with the actual node_id
-    let modified_expression = expression.replace("$NODEID", &node_id.to_string());
-
-    // Evaluate simple arithmetic expressions
-    let value_sum: i64 = modified_expression
-        .split('+')
-        .filter_map(|s| {
-            let s_trimmed = s.trim();
-            if s_trimmed.starts_with("0x") || s_trimmed.starts_with("0X") {
-                i64::from_str_radix(&s_trimmed[2..], 16).ok()
-            } else {
-                s_trimmed.parse::<i64>().ok()
-            }
-        })
-        .sum();
-
-    // Convert the evaluated sum to a string
-    value_sum.to_string()
-}
-
-pub fn get_standard_can_id_from_frame<F: Frame>(frame: &F) -> Option<u16> {
+pub fn get_cob_id<F: Frame>(frame: &F) -> Option<u16> {
     if let Id::Standard(sid) = frame.id() {
         return Some(sid.as_raw());
     }
+    // No standard id. We only support CAN 2.0a in current version.
     None
 }
 
 fn is_hex_char(c: char) -> bool {
-    ('0'..='9').contains(&c) || ('a'..='f').contains(&c) || ('A'..='F').contains(&c)
+    c.is_ascii_digit() || ('a'..='f').contains(&c) || ('A'..='F').contains(&c)
 }
 
-pub fn is_top(s: &str) -> bool {
+pub(crate) fn is_top(s: &str) -> bool {
     s.len() == 4 && s.chars().all(is_hex_char)
 }
 
-pub fn is_sub(s: &str) -> Option<(u16, u8)> {
+pub(crate) fn is_sub(s: &str) -> Option<(u16, u8)> {
     if s.len() > 7 && s[4..7].eq_ignore_ascii_case("sub") && s[0..4].chars().all(is_hex_char) {
         let (index_str, sub_str) = (&s[0..4], &s[7..]);
         match (u16::from_str_radix(index_str, 16), u8::from_str(sub_str)) {
@@ -107,7 +91,7 @@ pub fn is_sub(s: &str) -> Option<(u16, u8)> {
     }
 }
 
-pub fn is_name(s: &str) -> Option<u16> {
+pub(crate) fn is_name(s: &str) -> Option<u16> {
     s.ends_with("Name")
         .then(|| s[0..4].chars().all(is_hex_char))
         .and_then(|valid| valid.then(|| u16::from_str_radix(&s[0..4], 16).ok()))
@@ -121,33 +105,47 @@ pub fn get_index_from_can_frame<F: Frame>(frame: &F) -> (u16, u8) {
     )
 }
 
-pub fn flatten(slices: &[&[u8]]) -> Vec<u8> {
-    let mut res = Vec::new();
-    for slice in slices {
-        res.extend_from_slice(slice);
-    }
-    let l = res.len();
-    if l > 8 {
-        res.resize(8, 0);
-    } else {
-        for _ in l..8 {
-            res.push(0);
-        }
+pub(crate) fn flatten(slices: &[&[u8]]) -> Vec<u8> {
+    slices
+        .iter()
+        .flat_map(|&slice| slice.iter().cloned())
+        .take(8)
+        .chain(core::iter::repeat(0).take(8))
+        .take(8)
+        .collect()
+}
+
+pub fn u64_to_vec(data: u64, bytes: usize) -> Vec<u8> {
+    data.to_be_bytes()[8 - min(bytes, 8)..].to_vec()
+}
+
+pub(crate) fn vec_to_u64(v: &[u8]) -> u64 {
+    let mut res = 0u64;
+    for &x in v.iter().take(8) {
+        res = (res << 8) | (x as u64);
     }
     res
 }
 
-pub fn genf<F: Frame + Debug>(can_id: u16, bytes: &[u8]) -> F {
-    // Ensure bytes doesn't exceed 8 in length
-    let cutoff = if bytes.len() > 8 { 8 } else { bytes.len() };
-    let mut packet = bytes[0..cutoff].to_vec();
+pub fn create_frame_with_padding<F: Frame + Debug>(cob_id: u16, data: &[u8])
+    -> Result<F, ErrorCode> {
+    let mut packet = Vec::from(&data[..data.len().min(8)]);
+    packet.resize(8, 0);
 
-    // Padding to 8 bytes with 0
-    while packet.len() < 8 {
-        packet.push(0);
+    F::new(StandardId::new(cob_id).ok_or(ErrorCode::InvalidStandardId {cob_id})?,
+           &packet).ok_or(ErrorCode::FrameCreationFailed {data: data.to_vec()})
+}
+
+pub fn create_frame<F: Frame + Debug>(cob_id: u16, data: &[u8]) -> Result<F, ErrorCode> {
+    F::new(StandardId::new(cob_id).ok_or(ErrorCode::InvalidStandardId {cob_id})?, data)
+        .ok_or(ErrorCode::FrameCreationFailed{data: data.to_vec()})
+}
+
+pub fn convert_bytes_to_u32(data: &[u8]) -> Result<u32, ErrorCode> {
+    match data.try_into() {
+        Ok(arr) => Ok(u32::from_le_bytes(arr)),
+        Err(_) => Err(make_abort_error(GeneralError, "".to_string())),
     }
-
-    F::new(StandardId::new(can_id).unwrap(), packet.as_slice()).unwrap()
 }
 
 static CCITT_HASH: [u16; 256] = [
@@ -186,21 +184,172 @@ pub fn crc16_canopen_with_lut(bytes: &[u8]) -> u16 {
     crc
 }
 
+pub fn make_abort_error(abort_code: AbortCode, more_info: String) -> ErrorCode {
+    ErrorCode::AbortCodeWrapper {
+        abort_code,
+        more_info,
+    }
+}
+
 #[cfg(test)]
 mod util_tests {
-    use super::to_value_with_node_id;
-    use crate::util::parse_number;
+    use alloc::vec;
+    use alloc::vec::Vec;
+    use core::fmt::{Debug, Formatter};
+    use embedded_can::{ExtendedId, Frame, Id, StandardId};
+    use super::{create_frame, parse_number, ErrorCode, vec_to_u64, result_to_option, get_cob_id, get_index_from_can_frame, convert_bytes_to_u32};
+    use super::u64_to_vec;
+
+    struct MockFrame {
+        id: Id,
+        data: Vec<u8>,
+    }
+
+    impl MockFrame {
+        fn new_standard(id: u16, data: &[u8]) -> Self {
+            MockFrame {
+                id: Id::Standard(StandardId::new(id).expect("Invalid StandardId")),
+                data: data.to_vec(),
+            }
+        }
+
+        fn new_extended(id: u32, data: &[u8]) -> Self {
+            MockFrame {
+                id: Id::Extended(ExtendedId::new(id).expect("Invalid ExtendedId")),
+                data: data.to_vec(),
+            }
+        }
+    }
+
+    impl Frame for MockFrame {
+        fn new(_id: impl Into<Id>, data: &[u8]) -> Option<Self> {
+            if data.len() > 4 {
+                None
+            } else {
+                Some(MockFrame {
+                    id: _id.into(),
+                    data: data.to_vec(),
+                })
+            }
+        }
+
+        fn new_remote(_id: impl Into<Id>, _dlc: usize) -> Option<Self> {
+            None
+        }
+
+        fn is_extended(&self) -> bool {
+            matches!(self.id, Id::Extended(_))
+        }
+
+        fn is_remote_frame(&self) -> bool {
+            false
+        }
+
+        fn id(&self) -> Id {
+            self.id
+        }
+
+        fn dlc(&self) -> usize {
+            self.data.len()
+        }
+
+        fn data(&self) -> &[u8] {
+            &self.data
+        }
+    }
+
+    impl Debug for MockFrame {
+        fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+            write!(f, "mock_frame: {:x?}", self.data)
+        }
+    }
 
     #[test]
-    fn test_to_value_with_node_id() {
-        assert_eq!(to_value_with_node_id(2, "$NODEID + 100"), "102");
-        assert_eq!(to_value_with_node_id(2, "100+$NODEID"), "102");
-        assert_eq!(to_value_with_node_id(2, "100"), "100");
-        assert_eq!(to_value_with_node_id(2, "$NODEID+100+200"), "302");
-        assert_eq!(to_value_with_node_id(2, "$NODEID + 100 + 200"), "302");
-        assert_eq!(to_value_with_node_id(1234, "$NODEID + 100 + 200"), "1534");
-        assert_eq!(to_value_with_node_id(2, "No arithmetic here"), "0");
-        assert_eq!(to_value_with_node_id(2, "$NODEID+0x600"), "1538");
+    fn test_create_frame_success() {
+        let cob_id = 0x123;
+        let data = &[0x01, 0x02, 0x03];
+        let result = create_frame::<MockFrame>(cob_id, data);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_create_frame_invalid_standard_id() {
+        let cob_id = 0x1FFF;
+        let data = &[0x01, 0x02, 0x03];
+        let result = create_frame::<MockFrame>(cob_id, data);
+        assert!(matches!(result, Err(ErrorCode::InvalidStandardId { cob_id: _ })));
+    }
+
+    #[test]
+    fn test_create_frame_frame_creation_failed() {
+        let cob_id = 0x123;
+        let data = &[0x01, 0x02, 0x03, 0x04, 0x05];
+        let result = create_frame::<MockFrame>(cob_id, data);
+        match result {
+            Err(ErrorCode::FrameCreationFailed { data: returned_data }) => {
+                assert_eq!(returned_data, data);
+            },
+            _ => panic!("Expected ErrorCode::FrameCreationFailed, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_basic() {
+        assert_eq!(u64_to_vec(0x123456789ABCDEF0, 8),
+                   vec![0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]);
+        assert_eq!(u64_to_vec(0x01, 2), vec![0x0, 0x1]);
+        assert_eq!(u64_to_vec(0x8002, 2), vec![0x80, 0x02]);
+    }
+
+    #[test]
+    fn test_byte_length_exceeds_limit() {
+        assert_eq!(u64_to_vec(0x01, 9), vec![0, 0, 0, 0, 0, 0, 0, 1]);
+        assert_eq!(u64_to_vec(0x123456789ABCDEF0, 10), vec![0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]);
+    }
+
+    #[test]
+    fn test_boundary_conditions() {
+        assert_eq!(u64_to_vec(0x123456789ABCDEF0, 0), vec![]);
+        assert_eq!(u64_to_vec(0x123456789ABCDEF0, 3), vec![0xBC, 0xDE, 0xF0]);
+        assert_eq!(u64_to_vec(0x123456789ABCDEF0, 8), vec![0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0]);
+    }
+
+    #[test]
+    fn test_special_values() {
+        assert_eq!(u64_to_vec(0, 8), vec![0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(u64_to_vec(u64::MAX, 8), vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
+    }
+
+    #[test]
+    fn test_empty_vector() {
+        assert_eq!(vec_to_u64(&vec![]), 0);
+    }
+
+    #[test]
+    fn test_full_length_vector() {
+        assert_eq!(vec_to_u64(&vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]),
+                   0x0102030405060708);
+    }
+
+    #[test]
+    fn test_partial_length_vector() {
+        assert_eq!(vec_to_u64(&vec![0x01, 0x02, 0x03]), 0x010203);
+    }
+
+    #[test]
+    fn test_max_value_vector() {
+        assert_eq!(vec_to_u64(&vec![0xFF; 8]), 0xFFFFFFFFFFFFFFFF);
+    }
+
+    #[test]
+    fn test_single_element_vector() {
+        assert_eq!(vec_to_u64(&vec![0x01]), 0x01);
+    }
+
+    #[test]
+    fn test_long_vector() {
+        assert_eq!(vec_to_u64(&vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A]),
+                   0x0102030405060708);
     }
 
     #[test]
@@ -242,5 +391,38 @@ mod util_tests {
         let s = "CANopenDemoPIC32";
         let crc = crate::util::crc16_canopen_with_lut(s.as_bytes());
         assert_eq!(crc, 0x43F3, "({:x} != 0x43F3)", crc);
+    }
+
+    #[test]
+    fn test_result_to_option() {
+        let ok_result: Result<i32, &str> = Ok(10);
+        let err_result: Result<i32, &str> = Err("error");
+
+        assert_eq!(result_to_option(ok_result), Some(10));
+        assert_eq!(result_to_option(err_result), None);
+    }
+
+    #[test]
+    fn test_get_cob_id() {
+        let frame_with_standard_id = MockFrame::new_standard(123, &[0, 0, 0, 0]);
+        let frame_with_extended_id = MockFrame::new_extended(123456, &[0, 0, 0, 0]);
+
+        assert_eq!(get_cob_id(&frame_with_standard_id), Some(123));
+        assert_eq!(get_cob_id(&frame_with_extended_id), None);
+    }
+
+    #[test]
+    fn test_get_index_from_can_frame() {
+        let frame = MockFrame::new_standard(123, &[0, 1, 2, 3]);
+        assert_eq!(get_index_from_can_frame(&frame), (0x0201, 3));
+    }
+
+    #[test]
+    fn test_convert_bytes_to_u32() {
+        let valid_data = &[1, 0, 0, 0];
+        let invalid_data = &[1, 0, 0];
+
+        assert_eq!(convert_bytes_to_u32(valid_data), Ok(1));
+        assert!(convert_bytes_to_u32(invalid_data).is_err());
     }
 }

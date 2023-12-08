@@ -1,8 +1,13 @@
 [package]
-name = "canopen"
-version = "0.1.0"
+name = "canopen_rust"
+version = "0.1.1"
 authors = ["Zephyr Guo <zephyr@atomi.ai>"]
 edition = "2021"
+license = "Apache-2.0"
+description = "A CANOpen implementation for Rust."
+repository = "https://github.com/atomi-ai/canopen-rust"
+categories = ["canopen"]
+keywords = ["can", "canopen"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,5 +17,14 @@ hashbrown = "0.14"
 ini_core = "0.2"
 bitfield-struct = "0.5"
 bit-struct = "0.3"
+nb = { version = "1.1", features = ["defmt-0-3"] }
+log = "0.4.20"
 
-[features]
+[dev-dependencies]
+lazy_static = { version = "1.4.0", features = [] }
+
+[target.'cfg(target_arch = "arm")'.dependencies]
+defmt = "0.3.5"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+log = { version = "0.4", features = [] }
