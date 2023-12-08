@@ -18,8 +18,8 @@ use log::{error, info};
 use log::LevelFilter;
 use socketcan::{CanSocket, EmbeddedFrame, Frame, Socket};
 use timer::Timer;
+use canopen_rust::node::Node;
 
-use canopen::node::Node;
 use co_test::util as tu;
 
 pub struct TestContext {

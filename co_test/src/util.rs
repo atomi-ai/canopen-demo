@@ -4,7 +4,7 @@ use socketcan::{CanFrame, CanSocket, Socket};
 use std::os::fd::AsRawFd;
 use std::time::{Duration, Instant};
 use log::debug;
-use canopen::util::u64_to_vec;
+use canopen_rust::util::u64_to_vec;
 
 pub const INTERFACE_NAME: &str = "vcan0";
 pub const SAMPLE_EDS_PATH: &str = "tests/fixtures/sample.eds";

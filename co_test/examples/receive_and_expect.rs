@@ -3,7 +3,7 @@ use std::thread;
 
 use embedded_can::nb::Can;
 use socketcan::Socket;
-use canopen::error::ErrorCode;
+use canopen_rust::error::ErrorCode;
 
 use co_test::async_util::AsyncExpector;
 use co_test::util::INTERFACE_NAME;

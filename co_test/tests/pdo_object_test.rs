@@ -3,7 +3,7 @@ extern crate alloc;
 use socketcan::CanSocket;
 use socketcan::Socket;
 
-use canopen::node::Node;
+use canopen_rust::node::Node;
 use co_test::util as tu;
 use co_test::util::{exp, INTERFACE_NAME, send};
 

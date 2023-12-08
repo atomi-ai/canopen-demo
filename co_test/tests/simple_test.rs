@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use async_std::future::timeout;
-use canopen::node;
+use canopen_rust::node;
 use socketcan::async_io::CanSocket;
 use socketcan::{CanFrame, EmbeddedFrame, Socket, StandardId};
 use std::thread;

@@ -2,7 +2,7 @@ use std::thread;
 use std::time::Duration;
 use log::{debug, info};
 use socketcan::Socket;
-use canopen::error::ErrorCode;
+use canopen_rust::error::ErrorCode;
 
 use co_test::async_util::AsyncExpector;
 use co_test::util::{exp, INTERFACE_NAME, send};

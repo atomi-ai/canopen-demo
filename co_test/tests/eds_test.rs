@@ -2,8 +2,8 @@ mod testing;
 
 #[cfg(test)]
 mod eds_tests {
-    use canopen::data_type::DataType;
-    use canopen::object_directory::{
+    use canopen_rust::data_type::DataType;
+    use canopen_rust::object_directory::{
         obj_to_record, obj_to_variable, AccessType, ObjectDirectory, ObjectType,
     };
     use std::panic;

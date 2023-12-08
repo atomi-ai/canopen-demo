@@ -5,7 +5,7 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-canopen = {path = "crates/canopen" }
+canopen_rust = {path = "crates/canopen" }
 can2040 = {path = "crates/can2040" }
 embedded-can = "0.4"
 fugit = "0.3"

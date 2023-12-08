@@ -10,8 +10,8 @@ use embedded_can::Frame;
 use embedded_can::nb::Can;
 use log::{debug, info};
 use socketcan::{CanFrame, CanSocket, Socket};
-use canopen::error::ErrorCode;
-use canopen::util::{create_frame, u64_to_vec};
+use canopen_rust::error::ErrorCode;
+use canopen_rust::util::{create_frame, u64_to_vec};
 
 use crate::util::INTERFACE_NAME;
 

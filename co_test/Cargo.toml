@@ -1,12 +1,12 @@
 [package]
 name = "co_test"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-canopen = {path = "../crates/canopen" }
+canopen_rust = {path = "../crates/canopen" }
 
 embedded-can = "0.4"
 
