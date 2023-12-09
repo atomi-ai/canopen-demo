@@ -44,6 +44,7 @@ fn read_frame_with_timeout(
 pub fn send(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
     let bytes = u64_to_vec(data, len);
     let frame = CanFrame::new(StandardId::new(cob_id).unwrap(), bytes.as_slice()).unwrap();
+    debug!("Send frame: {:?}", frame);
     socket.write_frame(&frame).expect(&format!("Failed on sendf: {:?}", frame));
 }
 

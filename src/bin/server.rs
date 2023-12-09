@@ -26,7 +26,7 @@ use rp_pico as bsp;
 use app::global_allocator;
 use app::utils::{EDS_DATA_ADDRESS, read_string_from_flash};
 use can2040;
-use canopen::node;
+use canopen_rust::node;
 
 //
 // #[defmt::timestamp]
@@ -48,7 +48,6 @@ fn main() -> ! {
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
     let sio = Sio::new(pac.SIO);
     global_allocator::init_allocator();
-
 
     // External high-speed crystal on the pico board is 12Mhz
     let external_xtal_freq_hz = 12_000_000u32;
@@ -83,9 +82,9 @@ fn main() -> ! {
 
     loop {
         let free_bytes = global_allocator::ALLOCATOR.free();
-        info!("Free bytes in heap: {}", free_bytes);
+        // info!("Free bytes in heap: {}", free_bytes);
         node.process_one_frame();
-        delay.delay_ms(500);
+        // delay.delay_ms(500);
     }
 }
 

@@ -23,7 +23,7 @@ use canopen_rust::node::Node;
 use co_test::util as tu;
 
 pub struct TestContext {
-    _node_thread: thread::JoinHandle<()>,
+    _node_thread: Option<thread::JoinHandle<()>>,
 }
 
 impl TestContext {
@@ -73,7 +73,7 @@ impl TestContext {
                     let mut node_lock = node_arc.lock().unwrap();
                     node_lock.process_one_frame();
                 }
-                thread::sleep(Duration::from_micros(200));
+                thread::sleep(Duration::from_micros(100));
             }
         }).unwrap();
         while !is_running.load(Ordering::Relaxed) {
@@ -89,9 +89,17 @@ impl TestContext {
         }
 
         let tc = TestContext {
-            _node_thread: node_thread,
+            _node_thread: Some(node_thread),
         };
         Ok(tc)
+    }
+}
+
+impl Drop for TestContext {
+    fn drop(&mut self) {
+        if let Some(handler) = self._node_thread.take() {
+            let _ = handler.join();
+        }
     }
 }
 

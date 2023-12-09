@@ -109,6 +109,7 @@ pub fn sdo_block_upload_without_crc(s: &CanSocket) {
     exp(&s, 0x582, 0xCD_00_00_00_00_00_00_00, 8);
 
     send(&s, 0x602, 0xA1_00_00_00_00_00_00_00, 8);
+
 }
 
 pub fn sdo_block_upload_string_without_crc(s: &CanSocket) {
