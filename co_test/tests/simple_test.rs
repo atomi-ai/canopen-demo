@@ -40,7 +40,7 @@ fn test_nodes_communication_basic() {
 
 #[tokio::test]
 async fn test_start_a_conode() {
-    let client_socket = CanSocket::open(tu::INTERFACE_NAME).unwrap();
+    let client_socket = CanSocket::open(tu::VCAN0_INTERFACE).unwrap();
     let read_task = client_socket.read_frame();
 
     let is_running = Arc::new(AtomicBool::new(false));
@@ -48,7 +48,7 @@ async fn test_start_a_conode() {
     thread::spawn(move || {
         let content = std::fs::read_to_string(tu::SAMPLE_EDS_PATH).expect("Failed to read EDS file");
         let socket =
-            socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+            socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
         let mut node = node::Node::new(2, &content, socket).expect("");
         let _ = node.init();
         is_running_clone.store(true, Ordering::Relaxed);

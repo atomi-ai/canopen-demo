@@ -39,13 +39,13 @@ codegen-units = 1
 debug = 2
 debug-assertions = true
 incremental = false
-opt-level = 3
+opt-level = 0
 overflow-checks = true
 
 # cargo build/run --release
 [profile.release]
 codegen-units = 1
-debug = 0
+debug = 2
 debug-assertions = false
 incremental = false
 lto = 'fat'

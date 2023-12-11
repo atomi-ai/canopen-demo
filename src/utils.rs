@@ -1,5 +1,7 @@
 use alloc::string::{String, ToString};
+use defmt::info;
 use crate::flash::flash;
+use crate::global_allocator;
 
 const BLOCK_SIZE: usize = 4096;
 const FLASH_BASE_ADDR: u32 = 0x10000000;
@@ -61,4 +63,9 @@ pub fn write_bytes_to_flash(base_addr: u32, bytes: &[u8]) -> Result<(), &'static
     }
 
     Ok(())
+}
+
+pub fn log_free_bytes() {
+    let free_bytes = global_allocator::ALLOCATOR.free();
+    info!("Free bytes in heap: {}", free_bytes);
 }

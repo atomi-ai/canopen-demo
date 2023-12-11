@@ -10,11 +10,11 @@ use embedded_can::Frame;
 use embedded_can::nb::Can;
 use log::{debug, info};
 use socketcan::{CanFrame, CanSocket, Socket};
+
 use canopen_rust::error::ErrorCode;
 use canopen_rust::util::{create_frame, u64_to_vec};
 
-use crate::util::INTERFACE_NAME;
-
+#[derive(Debug)]
 struct FrameContainer {
     frames: Vec<CanFrame>,
 }
@@ -39,7 +39,7 @@ impl FrameContainer {
     }
 }
 
-fn wait_for_frame(container: Arc<Mutex<FrameContainer>>, expected: CanFrame) -> Result<CanFrame, &'static str> {
+fn wait_for_frame(container: Arc<Mutex<FrameContainer>>, expected: CanFrame) -> Result<CanFrame, String> {
     let start_time = Instant::now();
     let timeout = Duration::from_secs(3);
 
@@ -55,7 +55,7 @@ fn wait_for_frame(container: Arc<Mutex<FrameContainer>>, expected: CanFrame) -> 
 
         if start_time.elapsed() >= timeout {
             info!("xfguo: wait_for_frame 1.1.2; TIMEOUT: {:?}", expected);
-            return Err("Timeout in getting response");
+            return Err(format!("Timeout in getting response, expected: {:?}", expected));
         }
 
         thread::sleep(Duration::from_millis(100)); // 等待100ms后再次尝试
@@ -63,19 +63,22 @@ fn wait_for_frame(container: Arc<Mutex<FrameContainer>>, expected: CanFrame) -> 
     // info!("xfguo: wait_for_frame 9. Should not be here");
 }
 
-pub struct AsyncExpector {
+pub struct AsyncExpectorOld {
+    interface_name: &'static str,
     send_socket: Arc<Mutex<CanSocket>>,
     stop_flag: Arc<AtomicBool>,
     container: Arc<Mutex<FrameContainer>>,
-    join_handlers: Vec<JoinHandle<Result<CanFrame, &'static str>>>,
+    join_handlers: Vec<JoinHandle<Result<CanFrame, String>>>,
     receive_jh: Option<JoinHandle<()>>,
 }
 
-impl AsyncExpector {
-    pub fn new() -> Self {
-        let mut res = AsyncExpector {
-            send_socket: Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)
-                .expect("Failed to open CAN socket"))),
+impl AsyncExpectorOld {
+    pub fn new(interface_name: &'static str) -> Self {
+        let send_socket = Arc::new(Mutex::new(socketcan::CanSocket::open(interface_name)
+            .expect("Failed to open CAN socket")));
+        let mut res = AsyncExpectorOld {
+            interface_name,
+            send_socket,
             stop_flag: Arc::new(AtomicBool::new(false)),
             container: Arc::new(Mutex::new(FrameContainer::new())),
             join_handlers: vec![],
@@ -87,9 +90,10 @@ impl AsyncExpector {
     fn start(&mut self) {
         let container_clone = self.container.clone();
         let stop_flag_clone = self.stop_flag.clone();
+        let ifname_clone: &str = self.interface_name;
 
         let receive_thread = thread::Builder::new().name("receiver".to_string()).spawn(move || {
-            let mut recv_socket = socketcan::CanSocket::open(INTERFACE_NAME)
+            let mut recv_socket = CanSocket::open(ifname_clone)
                 .expect("Failed to open CAN socket");
             while !stop_flag_clone.load(Ordering::Relaxed) {
                 match recv_socket.receive() {
@@ -97,15 +101,15 @@ impl AsyncExpector {
                         let mut container = container_clone.lock().unwrap();
                         debug!("xfguo: Got frame: {:?}", frame);
                         container.push(frame);
-                    },
-                    Err(_) => { panic!("Errors in receiving packets") },
+                    }
+                    Err(_) => { panic!("Errors in receiving packets") }
                 }
                 thread::sleep(Duration::from_millis(50));
             }
         });
 
         match receive_thread {
-            Ok(rt) => {self.receive_jh = Option::from(rt)}
+            Ok(rt) => { self.receive_jh = Option::from(rt) }
             Err(_) => {}
         }
     }
@@ -114,7 +118,6 @@ impl AsyncExpector {
         let expected = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         let container_clone = self.container.clone();
         self.join_handlers.push(thread::spawn(move || {
-            debug!("xfguo: wait for frame: {:?}", expected);
             wait_for_frame(container_clone, expected)
         }));
         Ok(())
@@ -128,19 +131,21 @@ impl AsyncExpector {
             let t = jh.join();
             debug!("xfguo: wait result: {:?}", t);
             match t {
-                Ok(Ok(_)) => {},
+                Ok(Ok(_)) => {}
                 Ok(Err(err)) => {
-                    res += err;
-                },
-                Err(_) => {res += "join error";}
+                    res += err.as_str();
+                    res += "\n";
+                }
+                Err(_) => { res += "join error"; }
             }
         }
+        debug!("All pending frames: {:?}", self.container);
         debug!("xfguo: to return res = '{}'", res);
         res
     }
 
     pub fn send(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode> {
-        let f : CanFrame = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
+        let f: CanFrame = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         {
             let socket = self.send_socket.lock().unwrap();
             debug!("xfguo: send packet: {:?}", f);
@@ -154,12 +159,12 @@ impl AsyncExpector {
         let container_clone = self.container.clone();
         match wait_for_frame(container_clone, expected) {
             Ok(_) => {}
-            Err(err) => { assert!(false, "Error in getting response: {:?}", err)}
+            Err(err) => { assert!(false, "Error in getting response: {:?}", err) }
         }
         Ok(())
     }
 
-    pub fn unexpect(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode>{
+    pub fn unexpect(&mut self, cob_id: u16, data: u64, byte_num: usize) -> Result<(), ErrorCode> {
         let unexpected = create_frame(cob_id, &u64_to_vec(data, byte_num))?;
         let c_clone = self.container.clone();
         let mut c = c_clone.lock().unwrap();
@@ -170,7 +175,7 @@ impl AsyncExpector {
     }
 }
 
-impl Drop for AsyncExpector {
+impl Drop for AsyncExpectorOld {
     fn drop(&mut self) {
         debug!("~AsyncExpector(), errors: '{:?}'", self.wait_for_all());
 

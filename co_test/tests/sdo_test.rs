@@ -11,7 +11,7 @@ mod testing;
 fn test_write_and_read() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_write_and_read()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_write_and_read(&s);
 }
 
@@ -19,7 +19,7 @@ fn test_write_and_read() {
 fn test_error_write() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_error_write()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_error_write(&s);
 }
 
@@ -27,7 +27,7 @@ fn test_error_write() {
 fn test_error_read() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_error_read()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_error_read(&s);
 }
 
@@ -36,7 +36,7 @@ fn test_error_read() {
 fn test_read_basic() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_read_basic()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_expedite_read(&s);
 }
 
@@ -45,7 +45,7 @@ fn test_read_basic() {
 fn test_error_mismatch_length() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_error_mismatch_length()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_error_mismatch_length(&s);
 }
 
@@ -54,7 +54,7 @@ fn test_error_mismatch_length() {
 fn test_with_node_id_in_expr() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_with_node_id_in_expr()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_with_node_id_in_expr(&s);
 }
 
@@ -63,7 +63,7 @@ fn test_with_node_id_in_expr() {
 fn test_segment_download_basic() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_segment_download_basic()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_segment_download_basic(&s);
 }
 
@@ -72,7 +72,7 @@ fn test_segment_download_basic() {
 fn test_segment_upload() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_segment_upload()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_segment_upload(&s);
 }
 
@@ -81,7 +81,7 @@ fn test_segment_upload() {
 fn test_segment_upload_with_toggle_bit_error() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_segment_upload_with_toggle_bit_error()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_segment_upload_with_toggle_bit_error(&s);
 }
 
@@ -90,7 +90,7 @@ fn test_segment_upload_with_toggle_bit_error() {
 fn test_block_upload_without_crc() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_block_upload_without_crc()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_block_upload_without_crc(&s);
 }
 
@@ -99,7 +99,7 @@ fn test_block_upload_without_crc() {
 fn test_block_upload_string_without_crc() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_block_upload_string_without_crc()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_block_upload_string_without_crc(&s);
 }
 
@@ -108,7 +108,7 @@ fn test_block_upload_string_without_crc() {
 fn test_block_upload_string_with_crc() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_block_upload_string_with_crc()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_block_upload_string_with_crc(&s);
 }
 
@@ -117,7 +117,7 @@ fn test_block_upload_string_with_crc() {
 fn test_block_upload_with_wrong_blocksize() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_block_upload_with_wrong_blocksize()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_block_upload_with_wrong_blocksize(&s);
 }
 
@@ -126,6 +126,6 @@ fn test_block_upload_with_wrong_blocksize() {
 fn test_block_upload_with_wrong_ack_seqno() {
     let _context = CONTEXT.lock().unwrap();
     debug!("start test_block_upload_with_wrong_ack_seqno()");
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
     sdo_block_upload_with_wrong_ack_seqno(&s);
 }

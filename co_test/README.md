@@ -1,3 +1,5 @@
+# TODO(zephyr): Remove the file, all MD docs in root directory.
+
 # Tests for canopen
 
 ## Tests for x86 only

@@ -2,25 +2,23 @@ extern crate alloc;
 extern crate lazy_static;
 
 use alloc::sync::Arc;
-use std::io::Write;
 use std::panic;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, MutexGuard};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
 use async_std::future::timeout;
 use async_std::task;
-use chrono::Local;
-use env_logger::Builder;
 use lazy_static::lazy_static;
 use log::{error, info};
-use log::LevelFilter;
 use socketcan::{CanSocket, EmbeddedFrame, Frame, Socket};
 use timer::Timer;
-use canopen_rust::node::Node;
 
+use canopen_rust::node::Node;
 use co_test::util as tu;
+
+use crate::testing::test_context::tu::default_logger_init;
 
 pub struct TestContext {
     _node_thread: Option<thread::JoinHandle<()>>,
@@ -30,21 +28,21 @@ impl TestContext {
     async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         info!("Wait for the server up...");
         let content = std::fs::read_to_string(tu::DEMO_EDS_PATH).expect("Failed to read EDS file");
-        let s = socketcan::async_io::CanSocket::open(tu::INTERFACE_NAME).unwrap();
+        let s = socketcan::async_io::CanSocket::open(tu::VCAN0_INTERFACE).unwrap();
         let read_task = s.read_frame();
 
         info!("Start the testing server thread");
         let is_running = Arc::new(AtomicBool::new(false));
         let is_running_clone = is_running.clone();
         let node_thread = thread::Builder::new().name("node_thread".to_string()).spawn(move || {
-            let sock = socketcan::CanSocket::open(tu::INTERFACE_NAME)
+            let sock = socketcan::CanSocket::open(tu::VCAN0_INTERFACE)
                 .expect("Failed to open CAN socket");
             // Please remember to set "non-blocking" tag for the socket.
             sock.set_nonblocking(true).expect("TODO: panic message");
             let node_arc = Arc::new(Mutex::new(Node::new(2, &content, sock)
                 .expect("Errors in creating a node")));
             {
-                let mut node_lock : MutexGuard<Node<CanSocket>> = node_arc.lock().unwrap();
+                let mut node_lock: MutexGuard<Node<CanSocket>> = node_arc.lock().unwrap();
                 match node_lock.init() {
                     Ok(_) => {}
                     Err(err) => {
@@ -61,7 +59,7 @@ impl TestContext {
                     let mut node_lock = node_clone.lock().unwrap();
                     let res = node_lock.event_timer_callback();
                     res
-            });
+                });
 
             // start_event_timer(&timer, EVENT_TIMER_INTERVAL_MS, move || {
             //     node.event_timer_callback();
@@ -117,16 +115,4 @@ lazy_static! {
         let ctx = task::block_on(TestContext::new()).unwrap();
         Arc::new(Mutex::new(ctx))
     };
-}
-
-pub fn default_logger_init() {
-    Builder::new().format(|buf, record| {
-        buf.write_fmt(format_args!(
-            "{} [{}, {}] - {}\n",
-            Local::now().format("%Y-%m-%dT%H:%M:%S"),
-            record.level(),
-            thread::current().name().unwrap_or("main"),
-            record.args(),
-        ))
-    }).filter(None, LevelFilter::Debug).init();
 }

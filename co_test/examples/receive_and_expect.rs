@@ -5,15 +5,15 @@ use embedded_can::nb::Can;
 use socketcan::Socket;
 use canopen_rust::error::ErrorCode;
 
-use co_test::async_util::AsyncExpector;
-use co_test::util::INTERFACE_NAME;
+use co_test::async_util::AsyncExpectorOld;
+use co_test::util::VCAN0_INTERFACE;
 
 fn main() -> Result<(), ErrorCode> {
-    let mut ec = AsyncExpector::new();
+    let mut ec = AsyncExpectorOld::new(VCAN0_INTERFACE);
     ec.async_expect(0x582, 0x60_00_18_01_00_00_00_00, 8)?;
     assert_eq!(ec.wait_for_all(), "");
 
-    let socket = Arc::new(Mutex::new(socketcan::CanSocket::open(INTERFACE_NAME)
+    let socket = Arc::new(Mutex::new(socketcan::CanSocket::open(VCAN0_INTERFACE)
         .expect("Failed to open CAN socket")));
 
     {

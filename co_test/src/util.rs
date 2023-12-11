@@ -1,12 +1,19 @@
+use std::io::Write;
+use std::os::fd::AsRawFd;
+use std::thread;
+use std::time::{Duration, Instant};
+
+use chrono::Local;
 use embedded_can::{Frame, StandardId};
+use env_logger::Builder;
+use log::{debug, LevelFilter};
 use nix::poll::{poll, PollFd, PollFlags};
 use socketcan::{CanFrame, CanSocket, Socket};
-use std::os::fd::AsRawFd;
-use std::time::{Duration, Instant};
-use log::debug;
+
 use canopen_rust::util::u64_to_vec;
 
-pub const INTERFACE_NAME: &str = "vcan0";
+pub const VCAN0_INTERFACE: &str = "vcan0";
+pub const CAN0_INTERFACE: &str = "can0";
 pub const SAMPLE_EDS_PATH: &str = "tests/fixtures/sample.eds";
 pub const DEMO_EDS_PATH: &str = "tests/fixtures/demoDevice.eds";
 
@@ -53,16 +60,18 @@ pub fn exp(socket: &CanSocket, cob_id: u16, data: u64, len: usize) {
     expect_frame(socket, &frame);
 }
 
-fn expect_frame(socket: &CanSocket, expected: &socketcan::CanFrame) {
-    let timeout = Duration::from_millis(100);
+fn expect_frame(socket: &CanSocket, expected: &CanFrame) {
+    let timeout = Duration::from_millis(200);
     let start_time = Instant::now();
 
     loop {
         if let Ok(response_frame) = read_frame_with_timeout(socket, timeout) {
             if response_frame.id() == expected.id()
                 && response_frame.data() == expected.data() {
-                debug!("expect frame {:?}, succeeded", expected);
+                debug!("expect frame [{}] {:?}, succeeded", expected.dlc(), expected);
                 return;
+            } else {
+                debug!("unexpected frame [{}] {:?}, ignored", response_frame.dlc(), response_frame);
             }
         }
         if start_time.elapsed() >= Duration::from_secs(1) {
@@ -70,4 +79,16 @@ fn expect_frame(socket: &CanSocket, expected: &socketcan::CanFrame) {
         }
     }
     assert!(false, "Timeout in getting response of: {:?}", expected);
+}
+
+pub fn default_logger_init() {
+    Builder::new().format(|buf, record| {
+        buf.write_fmt(format_args!(
+            "{} [{}, {}] - {}\n",
+            Local::now().format("%Y-%m-%dT%H:%M:%S"),
+            record.level(),
+            thread::current().name().unwrap_or("main"),
+            record.args(),
+        ))
+    }).filter(None, LevelFilter::Debug).init();
 }

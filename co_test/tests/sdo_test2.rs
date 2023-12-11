@@ -18,7 +18,7 @@ mod testing;
 // SDO 21, write
 fn test_block_download_without_crc() {
     let _context = CONTEXT.lock().unwrap();
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
 
     send(&s, 0x602, 0xC2_17_10_00_02_00_00_00, 8);
     exp(&s, 0x582, 0xA4_17_10_00_7F_00_00_00, 8);
@@ -33,7 +33,7 @@ fn test_block_download_without_crc() {
 // Where is CRC?
 fn test_block_download_with_crc() {
     let _context = CONTEXT.lock().unwrap();
-    let s = socketcan::CanSocket::open(tu::INTERFACE_NAME).expect("Failed to open CAN socket");
+    let s = socketcan::CanSocket::open(tu::VCAN0_INTERFACE).expect("Failed to open CAN socket");
 
     send(&s, 0x602, 0xC6_17_10_00_02_00_00_00, 8);
     exp(&s, 0x582, 0xA4_17_10_00_7F_00_00_00, 8);
